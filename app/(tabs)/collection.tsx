@@ -1,75 +1,182 @@
-import { useState } from "react";
-import { View, Text, TextInput, Button, FlatList, StyleSheet } from "react-native";
+import { useState, useEffect } from "react";
+import { View, Text, TextInput, Button, FlatList, StyleSheet, Modal, TouchableOpacity } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect } from "expo-router";
-import { useCallback } from "react";
+import { useRouter } from "expo-router";
 
-export default function TodoListScreen() {
-  const [books, setBooks] = useState<string[]>([]);
-  const [newBook, setNewBook] = useState("");
+export default function CollectionsScreen() {
+  const [collections, setCollections] = useState<string[]>([]);
+  const [bookCounts, setBookCounts] = useState<{ [key: string]: number }>({});
+  const [newCollection, setNewCollection] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
+  const router = useRouter();
 
-  useFocusEffect(
-    useCallback(() => {
-      const loadBooks = async () => {
-        const storedBooks = await AsyncStorage.getItem("todoBooks");
-        if (storedBooks) setBooks(JSON.parse(storedBooks));
-      };
-      loadBooks();
-    }, [])
-  );
+  useEffect(() => {
+    const loadCollections = async () => {
+      const storedCollections = await AsyncStorage.getItem("collections");
+      if (storedCollections) {
+        const parsedCollections = JSON.parse(storedCollections);
+        setCollections(parsedCollections);
 
-  const addBook = async () => {
-    if (newBook.trim() === "") return;
-    const updatedBooks = [...books, newBook];
-    setBooks(updatedBooks);
-    await AsyncStorage.setItem("todoBooks", JSON.stringify(updatedBooks));
-    setNewBook("");
+        // Načti počet knih pro každou kolekci
+        const counts: { [key: string]: number } = {};
+        for (const collection of parsedCollections) {
+          const storedBooks = await AsyncStorage.getItem(`collection_${collection}`);
+          counts[collection] = storedBooks ? JSON.parse(storedBooks).length : 0;
+        }
+        setBookCounts(counts);
+      }
+    };
+    loadCollections();
+  }, []);
+
+  const addCollection = async () => {
+    if (newCollection.trim() === "") return;
+    const updatedCollections = [...collections, newCollection];
+    setCollections(updatedCollections);
+    await AsyncStorage.setItem("collections", JSON.stringify(updatedCollections));
+    setNewCollection("");
+    setModalVisible(false);
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>📚 Book list</Text>
-      <TextInput 
-        style={styles.input} 
-        placeholder="Write a book name" 
-        value={newBook} 
-        onChangeText={setNewBook} 
+      <Text style={styles.title}>📚 Book Collections</Text>
+
+      <FlatList
+        data={collections}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item }) => (
+          <TouchableOpacity onPress={() => router.push(`/collections/${encodeURIComponent(item)}`)}>
+            <View style={styles.collectionItem}>
+              <Text style={styles.collectionTitle}>{item}</Text>
+              <Text style={styles.collectionSub}>Number of books: {bookCounts[item] || 0}</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+        ListFooterComponent={
+          <TouchableOpacity style={styles.createButton} onPress={() => setModalVisible(true)}>
+            <Text style={styles.buttonText}>CREATE NEW COLLECTION</Text>
+          </TouchableOpacity>
+        }
       />
-      <Button title="Add" onPress={addBook} />
-      <FlatList 
-        data={books} 
-        keyExtractor={(item, index) => index.toString()} 
-        renderItem={({ item }) => <Text style={styles.book}>{item}</Text>} 
-      />
+
+      <Modal visible={modalVisible} transparent={true} animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>New Collection Name:</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter collection name"
+              value={newCollection}
+              onChangeText={setNewCollection}
+            />
+            <View style={styles.buttonRow}>
+              <TouchableOpacity style={styles.button} onPress={addCollection}>
+                <Text style={styles.buttonText}>CREATE</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.button} onPress={() => setModalVisible(false)}>
+                <Text style={styles.buttonText}>CANCEL</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-    container: { 
-      flex: 1, 
-      justifyContent: "center", 
-      alignItems: "center", 
-      backgroundColor: "#121212",
-      padding: 20
-    },
-    title: { 
-      fontSize: 20, 
-      fontWeight: "bold", 
-      color: "#FFFFFF"
-    },
-    input: { 
-      width: "80%", 
-      padding: 10, 
-      borderWidth: 1, 
-      marginVertical: 10, 
-      color: "#FFFFFF",
-      borderColor: "#FFFFFF",
-      backgroundColor: "#1E1E1E"
-    },
-    book: {
-      fontSize: 18,
-      color: "#FFFFFF",
-      marginVertical: 5
-    }
-  });
+  container: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: "#121212",
+    padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginBottom: 10,
+  },
+  collectionItem: {
+    backgroundColor: "#333",
+    padding: 15,
+    borderRadius: 10,
+    marginVertical: 10,
+    width: "90%", 
+    minHeight: 100, 
+    alignSelf: "center",
+  },
+  collectionTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    textAlign: "center",
+  },
+  collectionSub: {
+    fontSize: 16,
+    color: "#BBBBBB",
+    marginTop: 5,
+    textAlign: "center",
+  },
+  createButton: {
+    backgroundColor: "#007BFF",
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginTop: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    width: "90%",
+    alignSelf: "center",
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    textAlign: "center",
+    fontSize: 18,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "#333",
+    padding: 20,
+    borderRadius: 10,
+    width: "80%",
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginBottom: 10,
+  },
+  input: {
+    width: "100%",
+    padding: 10,
+    borderWidth: 1,
+    marginVertical: 10,
+    color: "#FFFFFF",
+    borderColor: "#FFFFFF",
+    backgroundColor: "#1E1E1E",
+    textAlign: "center",
+  },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  button: {
+    backgroundColor: "#007BFF",
+    padding: 10,
+    borderRadius: 5,
+    marginHorizontal: 5,
+    flex: 1,
+    alignItems: "center",
+  },
+});
+
