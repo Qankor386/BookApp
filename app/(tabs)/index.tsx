@@ -1,19 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { View, Text, Button, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
+import { useCallback } from "react";
 
 export default function HomeScreen() {
   const [currentBook, setCurrentBook] = useState<string | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    const loadCurrentBook = async () => {
-      const book = await AsyncStorage.getItem("currentBook");
-      if (book) setCurrentBook(book);
-    };
-    loadCurrentBook();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const loadCurrentBook = async () => {
+        const book = await AsyncStorage.getItem("currentBook");
+        setCurrentBook(book);
+      };
+      loadCurrentBook();
+    }, [])
+  );
 
   return (
     <View style={styles.container}>

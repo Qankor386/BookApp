@@ -1,18 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { View, Text, TextInput, Button, FlatList, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "expo-router";
+import { useCallback } from "react";
 
 export default function TodoListScreen() {
   const [books, setBooks] = useState<string[]>([]);
   const [newBook, setNewBook] = useState("");
 
-  useEffect(() => {
-    const loadBooks = async () => {
-      const storedBooks = await AsyncStorage.getItem("todoBooks");
-      if (storedBooks) setBooks(JSON.parse(storedBooks));
-    };
-    loadBooks();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const loadBooks = async () => {
+        const storedBooks = await AsyncStorage.getItem("todoBooks");
+        if (storedBooks) setBooks(JSON.parse(storedBooks));
+      };
+      loadBooks();
+    }, [])
+  );
 
   const addBook = async () => {
     if (newBook.trim() === "") return;
