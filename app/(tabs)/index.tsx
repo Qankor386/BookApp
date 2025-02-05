@@ -25,7 +25,20 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", alignItems: "center" },
-  title: { fontSize: 20, fontWeight: "bold" },
-  book: { fontSize: 18, marginVertical: 10 },
+  container: { 
+    flex: 1, 
+    justifyContent: "center", 
+    alignItems: "center",
+    backgroundColor: "#121212",
+  },
+  title: { 
+    fontSize: 20, 
+    fontWeight: "bold", 
+    color: "#FFFFFF"
+  },
+  book: { 
+    fontSize: 18, 
+    marginVertical: 10, 
+    color: "#FFFFFF"
+  }
 });
