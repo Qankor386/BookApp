@@ -58,9 +58,12 @@ export default function CollectionDetailScreen() {
             <Text style={styles.bookLabel}>Review: <Text style={styles.bookText}>{item.review}</Text></Text>
           </View>
         )}
+        ListFooterComponent={
+          <TouchableOpacity style={styles.createButton} onPress={() => setModalVisible(true)}>
+            <Text style={styles.buttonText}>ADD NEW BOOK</Text>
+          </TouchableOpacity>
+        }
       />
-
-      <Button title="Add Book" onPress={() => setModalVisible(true)} />
       
       <Modal visible={modalVisible} transparent={true} animationType="slide">
         <View style={styles.modalContainer}>
@@ -207,8 +210,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 5
   },
+  createButton: {
+    backgroundColor: "#007BFF",
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginTop: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    width: "90%",
+    alignSelf: "center",
+  },
   buttonText: {
     color: "#FFFFFF",
-    fontWeight: "bold"
-  }
+    fontWeight: "bold",
+    textAlign: "center",
+    fontSize: 18,
+  },
 });
