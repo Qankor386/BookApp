@@ -1,56 +1,181 @@
-import { useState } from "react";
-import { View, Text, Button, StyleSheet } from "react-native";
+import { useState, useEffect } from "react";
+import { View, Text, TextInput, StyleSheet, Modal, TouchableOpacity, FlatList } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter, useFocusEffect } from "expo-router";
+import { useFocusEffect } from "expo-router";
 import { useCallback } from "react";
 import { Book } from "../../constants/Book";
 
 export default function HomeScreen() {
-  const [currentBook, setCurrentBook] = useState<Book | null>(null);
-  const router = useRouter();
+  const [books, setBooks] = useState<Book[]>([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [newBook, setNewBook] = useState<Book>({
+    title: "",
+    series: "",
+    author: "",
+    releaseDate: "",
+    addedDate: new Date().toISOString(),
+  });
 
   useFocusEffect(
-  useCallback(() => {
-    const loadCurrentBook = async () => {
-      const book = await AsyncStorage.getItem("currentBook");
-      if (book) {
-        const parsedBook = JSON.parse(book);
-        parsedBook.addedDate = new Date(parsedBook.addedDate).toLocaleDateString("cs-CZ");
-        setCurrentBook(parsedBook);
-      }
-    };
-    loadCurrentBook();
-  }, [])
-);
+    useCallback(() => {
+      const loadBooks = async () => {
+        const storedBooks = await AsyncStorage.getItem("reading_books");
+        if (storedBooks) setBooks(JSON.parse(storedBooks));
+      };
+      loadBooks();
+    }, [])
+  );
+
+  const addBook = async () => {
+    if (newBook.title.trim() === "") return;
+    const updatedBooks = [...books, newBook];
+    setBooks(updatedBooks);
+    await AsyncStorage.setItem("reading_books", JSON.stringify(updatedBooks));
+    setNewBook({ title: "", series: "", author: "", releaseDate: "", addedDate: new Date().toISOString() });
+    setModalVisible(false);
+  };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>📖 Reading:</Text>
-      {currentBook ? (
-        <View style={styles.bookContainer}>
-          <Text style={styles.bookTitle}>{currentBook.title}</Text>
-          {currentBook.series && <Text style={styles.bookSeries}>Series: {currentBook.series}</Text>}
-          <Text style={styles.bookAuthor}>Author: {currentBook.author || "---"}</Text>
-          <Text style={styles.bookDate}>Published Date: {currentBook.releaseDate}</Text>
-          <Text style={styles.bookAdded}>Book Added: {currentBook.addedDate}</Text>
+
+      <FlatList
+        data={books}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.bookItem}>
+            <Text style={styles.bookLabel}>Name: <Text style={styles.bookTitle}>{item.title}</Text></Text>
+            {item.series && <Text style={styles.bookLabel}>Series: <Text style={styles.bookSeries}>{item.series}</Text></Text>}
+            <Text style={styles.bookLabel}>Author: <Text style={styles.bookText}>{item.author}</Text></Text>
+            <Text style={styles.bookLabel}>Added Date: <Text style={styles.bookText}>{new Date(item.addedDate).toLocaleDateString("cs-CZ")}</Text></Text>
+          </View>
+        )}
+        ListFooterComponent={
+          <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
+            <Text style={styles.buttonText}>ADD NEW BOOK</Text>
+          </TouchableOpacity>
+        }
+      />
+
+      {/* MODAL FORM */}
+      <Modal visible={modalVisible} transparent={true} animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add New Book</Text>
+            <TextInput style={styles.input} placeholder="Title" value={newBook.title} onChangeText={(text) => setNewBook({ ...newBook, title: text })} />
+            <TextInput style={styles.input} placeholder="Series" value={newBook.series} onChangeText={(text) => setNewBook({ ...newBook, series: text })} />
+            <TextInput style={styles.input} placeholder="Author" value={newBook.author} onChangeText={(text) => setNewBook({ ...newBook, author: text })} />
+            <TextInput style={styles.input} placeholder="Release Date" value={newBook.releaseDate} onChangeText={(text) => setNewBook({ ...newBook, releaseDate: text })} />
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={styles.saveButton} onPress={addBook}>
+                <Text style={styles.buttonText}>SAVE</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
+                <Text style={styles.buttonText}>CANCEL</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-      ) : (
-        <Text style={styles.noBook}>No book has been added</Text>
-      )}
-      <Button title="Add New Book" onPress={() => router.push("/edit")} />
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#121212" },
-  title: { fontSize: 20, fontWeight: "bold", color: "#FFFFFF" },
-  bookContainer: { alignItems: "center", marginVertical: 10 },
-  bookTitle: { fontSize: 22, fontWeight: "bold", color: "#FFFFFF" },
-  bookSeries: { fontSize: 18, fontStyle: "italic", color: "#CCCCCC" },
-  bookAuthor: { fontSize: 18, color: "#FFFFFF" },
-  bookRating: { fontSize: 18, color: "#FFD700" },
-  bookDate: { fontSize: 16, color: "#AAAAAA" },
-  bookAdded: { fontSize: 16, color: "#AAAAAA" },
-  noBook: { fontSize: 18, color: "#FFFFFF", fontStyle: "italic" },
+  container: { 
+    flex: 1, 
+    justifyContent: "center", 
+    alignItems: "center", 
+    backgroundColor: "#121212",
+    padding: 20
+  },
+  title: { 
+    fontSize: 24, 
+    fontWeight: "bold", 
+    color: "#FFFFFF",
+    marginBottom: 20
+  },
+  bookItem: {
+    marginBottom: 15,
+    padding: 10,
+    backgroundColor: "#1E1E1E",
+    borderRadius: 10,
+    width: "100%"
+  },
+  bookLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#FFFFFF"
+  },
+  bookTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#FFFFFF"
+  },
+  bookSeries: { fontStyle: "italic", color: "#CCCCCC" },
+  bookText: { color: "#CCCCCC" },
+  addButton: {
+    backgroundColor: "#007bff",
+    padding: 15,
+    borderRadius: 5,
+    marginTop: 20,
+    width: 200,
+    alignItems: "center",
+    alignSelf: "center"
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    fontSize: 16
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)"
+  },
+  modalContent: {
+    backgroundColor: "#333",
+    padding: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    width: "80%"
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginBottom: 10
+  },
+  input: { 
+    width: "100%", 
+    padding: 10, 
+    borderWidth: 1, 
+    marginVertical: 10, 
+    color: "#FFFFFF",
+    borderColor: "#FFFFFF",
+    backgroundColor: "#1E1E1E"
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    marginTop: 10
+  },
+  saveButton: {
+    backgroundColor: "#007bff",
+    padding: 10,
+    flex: 1,
+    marginRight: 10,
+    alignItems: "center",
+    borderRadius: 5
+  },
+  cancelButton: {
+    backgroundColor: "#d9534f",
+    padding: 10,
+    flex: 1,
+    alignItems: "center",
+    borderRadius: 5
+  }
 });
