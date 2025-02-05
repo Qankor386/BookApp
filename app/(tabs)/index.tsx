@@ -17,9 +17,9 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>📖 Právě čtete:</Text>
-      <Text style={styles.book}>{currentBook || "Žádná kniha není nastavena"}</Text>
-      <Button title="Upravit knihu" onPress={() => router.push("/edit")} />
+      <Text style={styles.title}>📖 Now reading:</Text>
+      <Text style={styles.book}>{currentBook || "You are not reading any book. Please select new book to read."}</Text>
+      <Button title="Edit book" onPress={() => router.push("/edit")} />
     </View>
   );
 }

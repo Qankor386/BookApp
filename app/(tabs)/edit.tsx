@@ -14,9 +14,9 @@ export default function EditBookScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Název knihy:</Text>
+      <Text style={styles.title}>Book name:</Text>
       <TextInput style={styles.input} value={book} onChangeText={setBook} />
-      <Button title="Uložit" onPress={saveBook} />
+      <Button title="Save" onPress={saveBook} />
     </View>
   );
 }
