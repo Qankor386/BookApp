@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold", 
     color: "#FFFFFF",
     marginTop: 30,
-    marginBottom: 30
+    marginBottom: 20
   },
   bookItem: {
     flexDirection: "row",

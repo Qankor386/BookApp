@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#FFFFFF",
     marginTop: 30,
-    marginBottom: 30,
+    marginBottom: 40,
   },
   clearButton: {
     backgroundColor: "#007bff",
