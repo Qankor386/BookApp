@@ -7,16 +7,26 @@
     "icon": "./assets/images/ikona.png",
     "splash": {
       "image": "./assets/images/splashscreen.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "resizeMode": "cover",
+      "backgroundColor": "#AEAEAE"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "splash": {
+        "image": "./assets/images/splashscreen.png",
+        "resizeMode": "cover",
+        "backgroundColor": "#AEAEAE"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#AEAEAE"
+      },
+      "splash": {
+        "image": "./assets/images/splashscreen.png",
+        "resizeMode": "cover",
+        "backgroundColor": "#AEAEAE"
       }
     },
     "plugins": [
@@ -25,8 +35,8 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/splashscreen.png",
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "resizeMode": "cover",
+          "backgroundColor": "#AEAEAE"
         }
       ]
     ]

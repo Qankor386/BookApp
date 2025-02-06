@@ -3,7 +3,7 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import { StorageProvider } from "../hooks/StorageContext";
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -16,18 +16,21 @@ export default function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  const onLayoutRootView = useCallback(async () => {
-    if (loaded) {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      await SplashScreen.hideAsync();
-    }
-  }, [loaded]);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    onLayoutRootView();
+    const prepareApp = async () => {
+      if (loaded) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        await SplashScreen.hideAsync();
+        setIsReady(true);
+      }
+    };
+
+    prepareApp();
   }, [loaded]);
 
-  if (!loaded) {
+  if (!loaded || !isReady) {
     return null;
   }
 
