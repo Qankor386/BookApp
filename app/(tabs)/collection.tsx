@@ -106,10 +106,10 @@ export default function CollectionsScreen() {
               onChangeText={setNewCollection}
             />
             <View style={styles.buttonRow}>
-              <TouchableOpacity style={styles.button} onPress={addCollection}>
+              <TouchableOpacity style={styles.saveButton} onPress={addCollection}>
                 <Text style={styles.buttonText}>CREATE</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.button} onPress={() => setModalVisible(false)}>
+              <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
                 <Text style={styles.buttonText}>CANCEL</Text>
               </TouchableOpacity>
             </View>
@@ -216,13 +216,20 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     width: "100%",
   },
-  button: {
-    backgroundColor: "#007BFF",
+  saveButton: {
+    backgroundColor: "#007bff",
     padding: 10,
-    borderRadius: 5,
-    marginHorizontal: 5,
+    flex: 1,
+    marginRight: 10,
+    alignItems: "center",
+    borderRadius: 5
+  },
+  cancelButton: {
+    backgroundColor: "#d9534f",
+    padding: 10,
     flex: 1,
     alignItems: "center",
-  },
+    borderRadius: 5
+  }
 });
 
