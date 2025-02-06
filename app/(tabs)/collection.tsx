@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { View, Text, TextInput, FlatList, StyleSheet, Modal, TouchableOpacity } from "react-native";
+import { View, Text, TextInput, FlatList, StyleSheet, Modal, TouchableOpacity, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter, useFocusEffect } from "expo-router";
 import { useCallback } from "react";
 import { useStorage } from "../../hooks/StorageContext";
+import { MaterialIcons } from "@expo/vector-icons";
 
 export default function CollectionsScreen() {
   const [collections, setCollections] = useState<string[]>([]);
@@ -25,10 +26,10 @@ export default function CollectionsScreen() {
         counts[collection] = storedBooks ? JSON.parse(storedBooks).length : 0;
       }
       setBookCounts(counts);
-    }else {
-        setCollections([]);
-        setBookCounts({});
-      }
+    } else {
+      setCollections([]);
+      setBookCounts({});
+    }
   };
 
   useEffect(() => {
@@ -53,6 +54,21 @@ export default function CollectionsScreen() {
     refreshStorage();
   };
 
+  const deleteCollection = async (collection: string) => {
+    const updatedCollections = collections.filter((c) => c !== collection);
+    setCollections(updatedCollections);
+    await AsyncStorage.setItem("collections", JSON.stringify(updatedCollections));
+
+    await AsyncStorage.removeItem(`collection_${collection}`);
+
+    const updatedCounts = { ...bookCounts };
+    delete updatedCounts[collection];
+    setBookCounts(updatedCounts);
+
+    Alert.alert("Deleted", `Collection "${collection}" has been removed.`);
+    refreshStorage();
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>📚 Book Collections</Text>
@@ -61,12 +77,16 @@ export default function CollectionsScreen() {
         data={collections}
         keyExtractor={(item, index) => index.toString()}
         renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => router.push(`/collections/${encodeURIComponent(item)}`)}>
-            <View style={styles.collectionItem}>
+          <View style={styles.collectionItem}>
+            <TouchableOpacity style={styles.collectionTextContainer} onPress={() => router.push(`/collections/${encodeURIComponent(item)}`)}>
               <Text style={styles.collectionTitle}>{item}</Text>
               <Text style={styles.collectionSub}>Number of books: {bookCounts[item] || 0}</Text>
-            </View>
-          </TouchableOpacity>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => deleteCollection(item)} style={styles.deleteButton}>
+              <MaterialIcons name="delete" size={24} color="#d9534f" />
+            </TouchableOpacity>
+          </View>
         )}
         ListFooterComponent={
           <TouchableOpacity style={styles.createButton} onPress={() => setModalVisible(true)}>
@@ -115,6 +135,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   collectionItem: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "#333",
     padding: 15,
     borderRadius: 10,
@@ -122,6 +144,10 @@ const styles = StyleSheet.create({
     width: "90%", 
     minHeight: 100, 
     alignSelf: "center",
+    justifyContent: "space-between",
+  },
+  collectionTextContainer: {
+    flex: 1,
   },
   collectionTitle: {
     fontSize: 22,
@@ -134,6 +160,10 @@ const styles = StyleSheet.create({
     color: "#BBBBBB",
     marginTop: 5,
     textAlign: "center",
+  },
+  deleteButton: {
+    padding: 10,
+    marginLeft: 15,
   },
   createButton: {
     backgroundColor: "#007BFF",
@@ -195,3 +225,4 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 });
+

@@ -5,6 +5,7 @@ import { useFocusEffect } from "expo-router";
 import { useCallback } from "react";
 import { Book } from "../../constants/Book";
 import { useStorage } from "../../hooks/StorageContext";
+import { MaterialIcons } from "@expo/vector-icons";
 
 export default function HomeScreen() {
   const [books, setBooks] = useState<Book[]>([]);
@@ -44,6 +45,13 @@ export default function HomeScreen() {
     refreshStorage();
   };
 
+  const deleteBook = async (index: number) => {
+    const updatedBooks = books.filter((_, i) => i !== index);
+    setBooks(updatedBooks);
+    await AsyncStorage.setItem("reading_books", JSON.stringify(updatedBooks));
+    refreshStorage();
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>📖 Reading:</Text>
@@ -51,12 +59,18 @@ export default function HomeScreen() {
       <FlatList
         data={books}
         keyExtractor={(item, index) => index.toString()}
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <View style={styles.bookItem}>
-            <Text style={styles.bookLabel}>Name: <Text style={styles.bookTitle}>{item.title}</Text></Text>
-            {item.series && <Text style={styles.bookLabel}>Series: <Text style={styles.bookSeries}>{item.series}</Text></Text>}
-            <Text style={styles.bookLabel}>Author: <Text style={styles.bookText}>{item.author}</Text></Text>
-            <Text style={styles.bookLabel}>Added Date: <Text style={styles.bookText}>{new Date(item.addedDate).toLocaleDateString("cs-CZ")}</Text></Text>
+            <View style={styles.bookInfo}>
+              <Text style={styles.bookLabel}>Name: <Text style={styles.bookTitle}>{item.title}</Text></Text>
+              {item.series && <Text style={styles.bookLabel}>Series: <Text style={styles.bookSeries}>{item.series}</Text></Text>}
+              <Text style={styles.bookLabel}>Author: <Text style={styles.bookText}>{item.author}</Text></Text>
+              <Text style={styles.bookLabel}>Added Date: <Text style={styles.bookText}>{new Date(item.addedDate).toLocaleDateString("cs-CZ")}</Text></Text>
+            </View>
+
+            <TouchableOpacity onPress={() => deleteBook(index)} style={styles.deleteButton}>
+              <MaterialIcons name="delete" size={24} color="#d9534f" />
+            </TouchableOpacity>
           </View>
         )}
         ListFooterComponent={
@@ -103,14 +117,20 @@ const styles = StyleSheet.create({
     fontWeight: "bold", 
     color: "#FFFFFF",
     marginTop: 30,
-    marginBottom: 20 
+    marginBottom: 30
   },
   bookItem: {
-    marginBottom: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     padding: 10,
     backgroundColor: "#1E1E1E",
     borderRadius: 10,
-    width: "100%"
+    width: "100%",
+    marginBottom: 15,
+  },
+  bookInfo: {
+    flex: 1,
   },
   bookLabel: {
     fontSize: 16,
@@ -124,6 +144,10 @@ const styles = StyleSheet.create({
   },
   bookSeries: { fontStyle: "italic", color: "#CCCCCC" },
   bookText: { color: "#CCCCCC" },
+  deleteButton: {
+    padding: 10,
+    marginLeft: 50
+  },
   addButton: {
     backgroundColor: "#007bff",
     padding: 15,

@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { View, Text, TextInput, Button, FlatList, StyleSheet, Modal, TouchableOpacity } from "react-native";
+import { View, Text, TextInput, FlatList, StyleSheet, Modal, TouchableOpacity, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams } from "expo-router";
 import { AirbnbRating } from "react-native-ratings";
 import { Book } from "../../constants/Book";
+import { MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 
 export default function CollectionDetailScreen() {
@@ -22,7 +23,7 @@ export default function CollectionDetailScreen() {
   const navigation = useNavigation();
 
   useEffect(() => {
-    navigation.setOptions({ title: "Collections" });
+    navigation.setOptions({ title: `Collection: ${id}` });
   }, [navigation]);
 
   useEffect(() => {
@@ -38,15 +39,17 @@ export default function CollectionDetailScreen() {
     const updatedBooks = [...books, newBook];
     setBooks(updatedBooks);
     await AsyncStorage.setItem(`collection_${id}`, JSON.stringify(updatedBooks));
-  
-    const storedCollections = await AsyncStorage.getItem("collections");
-    if (storedCollections) {
-      const parsedCollections = JSON.parse(storedCollections);
-      await AsyncStorage.setItem("collections", JSON.stringify(parsedCollections));
-    }
-  
+
     setNewBook({ title: "", series: "", author: "", releaseDate: "", rating: 0, review: "", addedDate: new Date().toISOString() });
     setModalVisible(false);
+  };
+
+  const deleteBook = async (index: number) => {
+    const updatedBooks = books.filter((_, i) => i !== index);
+    setBooks(updatedBooks);
+    await AsyncStorage.setItem(`collection_${id}`, JSON.stringify(updatedBooks));
+
+    Alert.alert("Deleted", "Book has been removed from the collection.");
   };
 
   return (
@@ -55,14 +58,20 @@ export default function CollectionDetailScreen() {
       <FlatList 
         data={books} 
         keyExtractor={(item, index) => index.toString()} 
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <View style={styles.bookItem}>
-            <Text style={styles.bookLabel}>Name: <Text style={styles.bookTitle}>{item.title}</Text></Text>
-            {item.series && <Text style={styles.bookLabel}>Series: <Text style={styles.bookSeries}>{item.series}</Text></Text>}
-            <Text style={styles.bookLabel}>Author: <Text style={styles.bookText}>{item.author}</Text></Text>
-            <Text style={styles.bookLabel}>Release Date: <Text style={styles.bookText}>{item.releaseDate}</Text></Text>
-            <Text style={styles.bookLabel}>Rating: <Text style={styles.starRating}>{"★".repeat(item.rating || 0)}</Text></Text>
-            <Text style={styles.bookLabel}>Review: <Text style={styles.bookText}>{item.review}</Text></Text>
+            <View style={styles.bookInfo}>
+              <Text style={styles.bookLabel}>Name: <Text style={styles.bookTitle}>{item.title}</Text></Text>
+              {item.series && <Text style={styles.bookLabel}>Series: <Text style={styles.bookSeries}>{item.series}</Text></Text>}
+              <Text style={styles.bookLabel}>Author: <Text style={styles.bookText}>{item.author}</Text></Text>
+              <Text style={styles.bookLabel}>Release Date: <Text style={styles.bookText}>{item.releaseDate}</Text></Text>
+              <Text style={styles.bookLabel}>Rating: <Text style={styles.starRating}>{"★".repeat(item.rating || 0)}</Text></Text>
+              <Text style={styles.bookLabel}>Review: <Text style={styles.bookText}>{item.review}</Text></Text>
+            </View>
+
+            <TouchableOpacity onPress={() => deleteBook(index)} style={styles.deleteButton}>
+              <MaterialIcons name="delete" size={28} color="#d9534f" />
+            </TouchableOpacity>
           </View>
         )}
         ListFooterComponent={
@@ -128,15 +137,21 @@ const styles = StyleSheet.create({
     fontSize: 28, 
     fontWeight: "bold", 
     color: "#FFFFFF",
-    marginTop: 30,
+    marginTop: 10,
     marginBottom: 20
   },
   bookItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 15,
     padding: 10,
     backgroundColor: "#1E1E1E",
     borderRadius: 10,
     width: "100%"
+  },
+  bookInfo: {
+    flex: 1,
   },
   bookLabel: {
     fontSize: 16,
@@ -159,6 +174,10 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     borderColor: "#FFFFFF",
     backgroundColor: "#1E1E1E"
+  },
+  deleteButton: {
+    padding: 10,
+    marginLeft: 30,
   },
   reviewInput: { 
     width: "100%", 
