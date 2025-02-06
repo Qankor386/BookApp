@@ -38,6 +38,13 @@ export default function CollectionDetailScreen() {
     const updatedBooks = [...books, newBook];
     setBooks(updatedBooks);
     await AsyncStorage.setItem(`collection_${id}`, JSON.stringify(updatedBooks));
+  
+    const storedCollections = await AsyncStorage.getItem("collections");
+    if (storedCollections) {
+      const parsedCollections = JSON.parse(storedCollections);
+      await AsyncStorage.setItem("collections", JSON.stringify(parsedCollections));
+    }
+  
     setNewBook({ title: "", series: "", author: "", releaseDate: "", rating: 0, review: "", addedDate: new Date().toISOString() });
     setModalVisible(false);
   };
@@ -121,6 +128,7 @@ const styles = StyleSheet.create({
     fontSize: 28, 
     fontWeight: "bold", 
     color: "#FFFFFF",
+    marginTop: 30,
     marginBottom: 20
   },
   bookItem: {

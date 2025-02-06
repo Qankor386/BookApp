@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
-import { View, Text, TextInput, Button, FlatList, StyleSheet, Modal, TouchableOpacity } from "react-native";
+import { View, Text, TextInput, FlatList, StyleSheet, Modal, TouchableOpacity } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
+import { useCallback } from "react";
+import { useStorage } from "../../hooks/StorageContext";
 
 export default function CollectionsScreen() {
   const [collections, setCollections] = useState<string[]>([]);
@@ -9,33 +11,46 @@ export default function CollectionsScreen() {
   const [newCollection, setNewCollection] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const router = useRouter();
+  const { triggerReload, refreshStorage } = useStorage();
+
+  const loadCollections = async () => {
+    const storedCollections = await AsyncStorage.getItem("collections");
+    if (storedCollections) {
+      const parsedCollections = JSON.parse(storedCollections);
+      setCollections(parsedCollections);
+
+      const counts: { [key: string]: number } = {};
+      for (const collection of parsedCollections) {
+        const storedBooks = await AsyncStorage.getItem(`collection_${collection}`);
+        counts[collection] = storedBooks ? JSON.parse(storedBooks).length : 0;
+      }
+      setBookCounts(counts);
+    }else {
+        setCollections([]);
+        setBookCounts({});
+      }
+  };
 
   useEffect(() => {
-    const loadCollections = async () => {
-      const storedCollections = await AsyncStorage.getItem("collections");
-      if (storedCollections) {
-        const parsedCollections = JSON.parse(storedCollections);
-        setCollections(parsedCollections);
-
-        // Načti počet knih pro každou kolekci
-        const counts: { [key: string]: number } = {};
-        for (const collection of parsedCollections) {
-          const storedBooks = await AsyncStorage.getItem(`collection_${collection}`);
-          counts[collection] = storedBooks ? JSON.parse(storedBooks).length : 0;
-        }
-        setBookCounts(counts);
-      }
-    };
     loadCollections();
-  }, []);
+  }, [triggerReload]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadCollections();
+    }, [])
+  );
 
   const addCollection = async () => {
     if (newCollection.trim() === "") return;
     const updatedCollections = [...collections, newCollection];
+
     setCollections(updatedCollections);
     await AsyncStorage.setItem("collections", JSON.stringify(updatedCollections));
+
     setNewCollection("");
     setModalVisible(false);
+    refreshStorage();
   };
 
   return (
@@ -96,7 +111,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "#FFFFFF",
-    marginBottom: 10,
+    marginTop: 30,
+    marginBottom: 20,
   },
   collectionItem: {
     backgroundColor: "#333",
@@ -179,4 +195,3 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 });
-

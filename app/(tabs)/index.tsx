@@ -4,10 +4,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "expo-router";
 import { useCallback } from "react";
 import { Book } from "../../constants/Book";
+import { useStorage } from "../../hooks/StorageContext";
 
 export default function HomeScreen() {
   const [books, setBooks] = useState<Book[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const { triggerReload, refreshStorage } = useStorage();
+
   const [newBook, setNewBook] = useState<Book>({
     title: "",
     series: "",
@@ -20,19 +23,25 @@ export default function HomeScreen() {
     useCallback(() => {
       const loadBooks = async () => {
         const storedBooks = await AsyncStorage.getItem("reading_books");
+
         if (storedBooks) setBooks(JSON.parse(storedBooks));
+        else setBooks([]);
       };
       loadBooks();
-    }, [])
+    }, [triggerReload])
   );
 
   const addBook = async () => {
     if (newBook.title.trim() === "") return;
     const updatedBooks = [...books, newBook];
+
     setBooks(updatedBooks);
     await AsyncStorage.setItem("reading_books", JSON.stringify(updatedBooks));
+
     setNewBook({ title: "", series: "", author: "", releaseDate: "", addedDate: new Date().toISOString() });
+
     setModalVisible(false);
+    refreshStorage();
   };
 
   return (
@@ -65,7 +74,6 @@ export default function HomeScreen() {
             <TextInput style={styles.input} placeholder="Title" value={newBook.title} onChangeText={(text) => setNewBook({ ...newBook, title: text })} />
             <TextInput style={styles.input} placeholder="Series" value={newBook.series} onChangeText={(text) => setNewBook({ ...newBook, series: text })} />
             <TextInput style={styles.input} placeholder="Author" value={newBook.author} onChangeText={(text) => setNewBook({ ...newBook, author: text })} />
-            <TextInput style={styles.input} placeholder="Release Date" value={newBook.releaseDate} onChangeText={(text) => setNewBook({ ...newBook, releaseDate: text })} />
 
             <View style={styles.buttonContainer}>
               <TouchableOpacity style={styles.saveButton} onPress={addBook}>
@@ -94,7 +102,8 @@ const styles = StyleSheet.create({
     fontSize: 24, 
     fontWeight: "bold", 
     color: "#FFFFFF",
-    marginBottom: 20
+    marginTop: 30,
+    marginBottom: 20 
   },
   bookItem: {
     marginBottom: 15,
